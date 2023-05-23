@@ -17,7 +17,8 @@ sudo apt install strace
 Writing to /root/pass.log
 
 Found SSHD Pid: 3011949. Attaching...
-Method: sshd
+
+Process: sshd: unknown [priv]
 May 23 17:16:03 kali sshd[3011949]: Invalid user frank from 172.25.25.132 port 50962
 May 23 17:16:06 kali sshd[3011949]: Failed password for invalid user frank from 172.25.25.132 port 50962 ssh2
 May 23 17:16:20 kali sshd[3011949]: Failed password for invalid user frank from 172.25.25.132 port 50962 ssh2
@@ -28,34 +29,34 @@ Password Attempt 2: "Spring2022!"
 Password Attempt 3: ""
 ----------------------------------------------------
 Found SSHD Pid: 3022996. Attaching...
-Method: sshd
+
+Process: sshd: spicy [priv]
 May 23 17:16:32 kali sshd[3022996]: Accepted password for spicy from 172.25.25.132 port 50964 ssh2
 Password Attempt 1: "Password1!"
-
 ----------------------------------------------------
 Found Outbound SSH Pid: 3575968. Attaching...
 
-Process : ssh pi@pi.hole
+Process: ssh pi@pi.hole
 User: spicy
 Password Attempt 1: "1234"
 Password Attempt 2: "!beep20"
 ----------------------------------------------------
 Found Su Pid: 3028865. Attaching...
 
-Process : su spicy
+Process: su spicy
 User: spicy
 Password Attempt: "Password1!"
 Successfully Elevated
 ----------------------------------------------------
 Found Sudo Pid: 3037832. Attaching...
 
-Process : sudo id
+Process: sudo id
 User: root
 Elevation Failed
 ----------------------------------------------------
 Found Sudo Pid: 3040090. Attaching...
 
-Process : sudo id
+Process: sudo id
 User: spicy
 Password Attempt 1: "Password1!"
 Successfully Elevated
