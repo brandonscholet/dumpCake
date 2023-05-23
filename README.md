@@ -10,7 +10,6 @@ sudo apt install strace
 # Usage
 
 ```
-
 ┌──(root㉿kali)-[~/dumpCake]
 └─# ./cake.sh 
 Writing to /root/pass.log
@@ -51,17 +50,16 @@ User: spicy
 Password Attempt 1: "Password1!"
 Successfully Elevated
 ----------------------------------------------------
-
 ```
 
-#To install as a service
+# To install as a service
 ```
 ┌──(root㉿kali)-[~/dumpCake]
 └─# ./persist.sh 
 Created symlink /etc/systemd/system/multi-user.target.wants/password-logging.service → /etc/systemd/system/password-logging.service.
 ```
 
-#Log output
+# Log output
 ```
 ┌──(root㉿kali)-[~]
 └─# tail -f pass.log 
