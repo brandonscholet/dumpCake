@@ -21,7 +21,7 @@ Description=Password Logging Service
 After=network.target
 
 [Service]
-ExecStart=/root/cakr.sh
+ExecStart=/root/cake.sh
 Restart=always
 RestartSec=10
 
